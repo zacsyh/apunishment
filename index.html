@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>真心话大冒险</title>
+    <style>
+        /* ============ 全局配置 ============ */
+        :root {
+            --primary: #ff4081;
+            --bg: #fce4ec;
+        }
+
+        body {
+            font-family: 'PingFang SC', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden; /* 禁止滚动 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 卡片容器 */
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 85%;
+            max-width: 360px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            color: #d81b60;
+            font-size: 20px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ============ 第一关按钮样式 (图文组合) ============ */
+        .btn-box {
+            height: 180px; /* 增加高度以容纳图片 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+
+        /* 通用按钮样式 */
+        .img-btn {
+            border: none;
+            outline: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column; /* 图片在上，文字在下 */
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            width: 120px; /* 固定宽度 */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* 图片样式 */
+        .img-btn img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%; /* 圆形头像 */
+            object-fit: cover;
+            margin-bottom: 8px;
+            pointer-events: none; /* 防止图片被拖拽 */
+        }
+
+        /* 搞笑女按钮 */
+        #btn-funny {
+            background-color: var(--primary);
+            color: white;
+            z-index: 5;
+            font-weight: bold;
+        }
+
+        /* 女神按钮 */
+        #btn-goddess {
+            background-color: #f5f5f5;
+            color: #333;
+            z-index: 100;
+            font-weight: normal;
+        }
+
+        /* ============ 第二关 转盘 ============ */
+        .wheel-box {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 0 auto 20px;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 36px;
+            background: #d81b60;
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+            z-index: 50;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 6px solid white;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+
+        .wheel-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .wheel-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .item {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 20px;
+            height: 50%;
+            transform-origin: bottom center;
+            font-size: 12px;
+            color: #fff;
+            padding-top: 10px;
+            writing-mode: vertical-rl;
+            display: flex;
+            align-items: center;
+        }
+
+        #btn-spin {
+            background-color: #00bcd4;
+            color: white;
+            padding: 12px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);
+            cursor: pointer;
+        }
+        
+        #btn-spin:disabled {
+            background-color: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* ============ 结果弹窗 ============ */
+        #modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-body {
+            background: white;
+            padding: 25px;
+            width: 70%;
+            max-width: 280px;
+            border-radius: 15px;
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .result-big {
+            font-size: 24px;
+            font-weight: bold;
+            color: #d81b60;
+            margin: 15px 0;
+            border: 2px dashed #ff80ab;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .close-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 25px;
+            border-radius: 50px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 第一关 -->
+    <div id="phase-1" class="card">
+        <h1 id="title">你究竟是<br>小学生搞笑女<br>还是高冷女神？</h1>
+        
+        <div class="btn-box">
+            <!-- 搞笑女按钮 (图文版) -->
+            <button id="btn-funny" class="img-btn" onclick="passLevel()">
+                <!-- ↓↓↓ 请把 src 后面的链接换成你自己的图片链接 ↓↓↓ -->
+                <img src="assets\gaoxiaonv.png" alt="搞笑女">
+                <span>小学生搞笑女</span>
+            </button>
+            
+            <!-- 女神按钮 (图文版) -->
+            <button id="btn-goddess" class="img-btn" onclick="runAway()">
+                <!-- ↓↓↓ 请把 src 后面的链接换成你自己的图片链接 ↓↓↓ -->
+                <img src="assets\gaoleng.png" alt="高冷女神">
+                <span>高冷女神</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 第二关 -->
+    <div id="phase-2" class="card hidden">
+        <h1>🎡 接受正义的惩罚</h1>
+        <div class="wheel-box">
+            <div class="pointer"></div>
+            <div class="wheel" id="wheel">
+                <div class="wheel-bg" id="wheel-bg"></div>
+                <div class="wheel-text" id="wheel-text"></div>
+            </div>
+        </div>
+        <button id="btn-spin" onclick="startSpin()">开始抽取</button>
+    </div>
+
+    <!-- 弹窗结果 -->
+    <div id="modal-mask">
+        <div class="modal-body">
+            <h2 style="margin:0 0 10px 0; font-size:18px;">🎉 抽取结果</h2>
+            <div>你的惩罚是：</div>
+            <div class="result-big" id="result-content">...</div>
+            <button class="close-btn" onclick="closeModal()">我认了</button>
+        </div>
+    </div>
+
+    <script>
+        /* ================= 配置中心 ================= */
+        
+        // 1. 转盘惩罚内容
+        const list = [
+            "切腹自尽", 
+            "天台坠落", 
+            "公布所有丑照", 
+            "做2000个深蹲", 
+            "断食一周", 
+            "做2000个俯卧撑", 
+            "语音道歉承认错误",  // 必中项 (索引 6)
+            "磕头", 
+            "唱歌（完整版）", 
+            "用屁股写名字" 
+        ];
+
+        // 2. 结局锁定索引 (0-9)
+        const targetIndex = 6; 
+
+        // 3. 女神最多点几次 (6次)
+        const maxClicks = 6; 
+
+        /* =========================================== */
+
+        // 第一关变量
+        let count = 0;
+        const btnG = document.getElementById('btn-goddess');
+        const btnF = document.getElementById('btn-funny');
+        const title = document.getElementById('title');
+
+        // 女神按钮乱跑逻辑
+        function runAway() {
+            count++;
+
+            // 1. 搞笑女按钮放大 (上限 1.5倍)
+            let scale = 1 + (count * 0.1); 
+            if (scale > 1.5) scale = 1.5; 
+            btnF.style.transform = `scale(${scale})`;
+
+            // 2. 次数判定
+            if (count >= maxClicks) {
+                btnG.style.display = 'none';
+                title.innerHTML = "别挣扎了<br>承认你的真实面目👇";
+                return;
+            }
+
+            // 3. 随机移动 (针对大按钮优化范围)
+            btnG.style.position = 'fixed'; 
+            
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            // 按钮大约宽120，高140。
+            // 留出足够边距防止出界 (w - 150)
+            const randomX = Math.random() * (w - 150) + 20;
+            const randomY = Math.random() * (h - 180) + 20;
+
+            btnG.style.left = randomX + 'px';
+            btnG.style.top = randomY + 'px';
+        }
+
+        function passLevel() {
+            document.getElementById('phase-1').classList.add('hidden');
+            document.getElementById('phase-2').classList.remove('hidden');
+            initWheel(); 
+        }
+
+
+        // 第二关 转盘逻辑
+        const wheel = document.getElementById('wheel');
+        const wheelBg = document.getElementById('wheel-bg');
+        const wheelText = document.getElementById('wheel-text');
+        const spinBtn = document.getElementById('btn-spin');
+        
+        const colors = ['#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9', '#BBDEFB', '#B3E5FC', '#B2EBF2', '#B2DFDB', '#C8E6C9'];
+        let currentDeg = 0;
+        let isSpinning = false;
+
+        function initWheel() {
+            const num = list.length;
+            const perDeg = 360 / num;
+
+            let bgStr = 'conic-gradient(';
+            for(let i=0; i<num; i++) {
+                bgStr += `${colors[i % colors.length]} ${i*perDeg}deg ${(i+1)*perDeg}deg,`;
+            }
+            bgStr = bgStr.slice(0, -1) + ')';
+            wheelBg.style.background = bgStr;
+
+            wheelText.innerHTML = '';
+            list.forEach((txt, i) => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerText = txt;
+                div.style.transform = `rotate(${i * perDeg + perDeg/2}deg)`;
+                wheelText.appendChild(div);
+            });
+        }
+
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+
+            const num = list.length;
+            const perDeg = 360 / num;
+            
+            // 计算目标角度
+            const targetDeg = targetIndex * perDeg + (perDeg / 2);
+            const visualTarget = 360 - targetDeg;
+
+            // 转5圈
+            const loops = 360 * 5;
+            const base = Math.ceil(currentDeg / 360) * 360;
+            let nextDeg = base + loops + visualTarget;
+
+            wheel.style.transform = `rotate(${nextDeg}deg)`;
+            currentDeg = nextDeg;
+
+            setTimeout(() => {
+                showModal(list[targetIndex]);
+                isSpinning = false;
+                spinBtn.disabled = false;
+                spinBtn.innerText = "再玩一次";
+            }, 4000);
+        }
+
+        // 弹窗相关
+        const modal = document.getElementById('modal-mask');
+        const resultDiv = document.getElementById('result-content');
+
+        function showModal(text) {
+            resultDiv.innerText = text;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
